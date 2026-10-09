@@ -15,7 +15,8 @@ import {
 import "leaflet/dist/leaflet.css";
 import "./App.css";
 
-const API_URL = "http://127.0.0.1:8000/api/files/";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api/files/";
 
 /* Automatically zoom the map to the uploaded geometry. */
 function MapController({ geojson }) {

@@ -1,3 +1,4 @@
+from importlib.resources import contents
 from pathlib import Path
 import tempfile
 
@@ -12,7 +13,7 @@ router = APIRouter(
     prefix="/api/files",
     tags=["Files"]
 )
-
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
 
 @router.post("/")
 async def upload_file(file: UploadFile = File(...)):
@@ -41,7 +42,13 @@ async def upload_file(file: UploadFile = File(...)):
             file_path = Path(temp_dir) / filename
 
             # Save uploaded file
-            contents = await file.read()
+            contents = await file.read(MAX_UPLOAD_BYTES + 1)
+
+            if len(contents) > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail="File too large. Maximum upload size is 20 MB.",
+            )
 
             with open(file_path, "wb") as buffer:
                 buffer.write(contents)
@@ -98,6 +105,8 @@ async def upload_file(file: UploadFile = File(...)):
                 "measurements": measurements,
                 "geojson": geojson,
             }
+    except HTTPException:
+        raise
             
     except ValueError as exc:
         raise HTTPException(
